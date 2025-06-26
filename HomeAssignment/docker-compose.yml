@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: homeassignment-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass homeassignment123
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # Your API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homeassignment-api
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      # App settings
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      
+      # Storage - use your existing MongoDB or InMemory
+      StorageSettings__StorageType: MongoDB
+      MongoDbSettings__ConnectionString: mongodb://host.docker.internal:27017
+      MongoDbSettings__DatabaseName: HomeAssignmentDb
+      MongoDbSettings__CollectionName: DataItems
+      
+      # Redis cache settings
+      CacheSettings__UseRedis: true
+      CacheSettings__RedisConnectionString: redis:6379,password=homeassignment123
+      CacheSettings__CacheDurationMinutes: 10
+      CacheSettings__FileCacheDurationMinutes: 30
+      CacheSettings__FileCachePath: /app/FileCache
+      
+      # JWT settings (your existing values)
+      JwtSettings__SecretKey: MyVeryLongAndSecureSecretKeyForJWTTokensWithAtLeast32Characters
+      JwtSettings__Issuer: HomeAssignmentAPI
+      JwtSettings__Audience: HomeAssignmentClients
+      JwtSettings__ExpirationMinutes: 60
+    
+    depends_on:
+      redis:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  redis_data:

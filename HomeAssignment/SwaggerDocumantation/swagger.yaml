@@ -1,0 +1,351 @@
+openapi: 3.0.1
+info:
+  title: Home Assignment API
+  description: A REST API with JWT authentication, role-based authorization, and multi-layer caching
+  version: v1
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+server:
+  - url: https://localhost:7059
+    description: Development Server
+
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login with username and password to get JWT token
+      description: Authenticate user and receive JWT token for API access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: admin
+              password: admin123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                username: admin
+                role: Admin
+                expiresAt: "2025-06-26T15:30:00Z"
+        '400':
+          description: Bad request - missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current authenticated user info
+      description: Retrieve information about the currently authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized - invalid or missing token
+        '404':
+          description: User not found
+
+  /api/data:
+    post:
+      tags:
+        - Data Management
+      summary: Create a new data item
+      description: Create a new data item (Admin only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataItemDto'
+            example:
+              value: "New data item"
+      responses:
+        '201':
+          description: Data item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataItemDto'
+        '400':
+          description: Bad request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing token
+        '403':
+          description: Forbidden - requires Admin role
+
+  /api/data/{id}:
+    get:
+      tags:
+        - Data Management
+      summary: Get data item by ID
+      description: Retrieve a specific data item by its ID (available to both Admin and User roles)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the data item to retrieve
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Data item retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataItemDto'
+              example:
+                id: 1
+                value: "Sample data"
+                createdAt: "2025-06-26T10:00:00Z"
+        '400':
+          description: Bad request - invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing token
+        '403':
+          description: Forbidden - requires Admin or User role
+        '404':
+          description: Data item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Data Management
+      summary: Update an existing data item
+      description: Update a data item by its ID (Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the data item to update
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataItemDto'
+            example:
+              value: "Updated data item"
+      responses:
+        '200':
+          description: Data item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataItemDto'
+        '400':
+          description: Bad request - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing token
+        '403':
+          description: Forbidden - requires Admin role
+        '404':
+          description: Data item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username for authentication
+          example: admin
+        password:
+          type: string
+          format: password
+          description: Password for authentication
+          example: admin123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        username:
+          type: string
+          description: Username of authenticated user
+          example: admin
+        role:
+          $ref: '#/components/schemas/UserRole'
+        expiresAt:
+          type: string
+          format: date-time
+          description: Token expiration timestamp
+          example: "2025-06-26T15:30:00Z"
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Unique user identifier
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: admin
+        role:
+          type: string
+          description: User role
+          example: Admin
+        createdAt:
+          type: string
+          format: date-time
+          description: User creation timestamp
+          example: "2025-06-26T10:00:00Z"
+
+    CreateDataItemDto:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: The value/content of the data item
+          minLength: 1
+          maxLength: 1000
+          example: "Sample data item"
+
+    UpdateDataItemDto:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: The updated value/content of the data item
+          minLength: 1
+          maxLength: 1000
+          example: "Updated data item"
+
+    DataItemDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Unique identifier for the data item
+          example: 1
+        value:
+          type: string
+          description: The value/content of the data item
+          example: "Sample data item"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-06-26T10:00:00Z"
+
+    UserRole:
+      type: string
+      enum:
+        - User
+        - Admin
+      description: User role determining access permissions
+      example: Admin
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Invalid username or password"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+          example:
+            - "Value is required"
+            - "Value must be between 1 and 1000 characters"
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Data Management
+    description: CRUD operations for data items with role-based access control
+
+security:
+  - BearerAuth: []
