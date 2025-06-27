@@ -19,6 +19,7 @@ Before running this project, ensure you have the following installed:
 - **MongoDB** - [Download and install MongoDB Community Server](https://www.mongodb.com/try/download/community)
 - **Redis** (optional - for Redis caching) - [Download here](https://redis.io/download) or use Docker
 - **Postman** - [Download here](https://www.postman.com/downloads/) for API testing
+- **Git** - [Download here](https://git-scm.com/downloads)
 - **Docker** (optional - for containerized deployment) - [Download here](https://www.docker.com/products/docker-desktop)
 
 ## Setup Instructions
@@ -145,16 +146,72 @@ docker-compose down && docker-compose up --build
 
 ---
 
-## API Endpoints
+## Running Unit Tests
 
-| Method | Endpoint | Description | Authentication Required |
-|--------|----------|-------------|------------------------|
-| POST | `/api/auth/login` | User authentication | No |
-| GET | `/api/data/{id}` | Get data by ID | Yes (User/Admin) |
-| POST | `/api/data` | Create new record | Yes (Admin) |
-| PUT | `/api/data/{id}` | Update existing record | Yes (Admin) |
+This project includes a comprehensive xUnit test suite to ensure code quality and reliability.
 
-## Testing with Postman
+### Option 1: Running Tests in Visual Studio
+
+1. **Open Test Explorer**
+   - Go to **Test** → **Test Explorer** (or press `Ctrl+E, T`)
+
+2. **Build the Solution**
+   - Build the entire solution to discover all tests
+   - Right-click solution → **"Build Solution"** or press `Ctrl+Shift+B`
+
+3. **Run Tests**
+   - **Run All Tests**: Click **"Run All Tests"** button in Test Explorer
+   - **Run Specific Tests**: Right-click on individual tests or test classes and select **"Run"**
+   - **Run by Category**: Use the grouping options to run tests by project, class, or outcome
+
+4. **View Results**
+   - Test Explorer will show passed/failed tests with green/red indicators
+   - Click on failed tests to see detailed error messages
+   - Use the output window for additional test information
+
+### Option 2: Running Tests via Command Line
+
+To run the tests, you need to navigate to the HomeAssignment.Test directory:
+
+```bash
+# Navigate to the test project
+cd HomeAssignment.Test
+
+# Run the tests
+dotnet test
+```
+
+Additional command line options:
+
+```bash
+# Run tests with detailed output
+dotnet test --verbosity normal
+
+# Run tests and generate coverage report
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run tests matching a filter
+dotnet test --filter "TestCategory=Integration"
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: API endpoint testing with authentication
+- **Repository Tests**: Database operation testing
+- **Service Layer Tests**: Business logic validation
+- **Authentication Tests**: JWT token validation and role-based authorization
+
+### Test Results Interpretation
+
+- ✅ **Green/Passed**: Test executed successfully
+- ❌ **Red/Failed**: Test failed - check error details
+- ⚠️ **Yellow/Skipped**: Test was skipped (usually due to conditional logic)
+
+---
+
+## API Testing with Postman
 
 ### 1. Import Postman Collection
 
@@ -196,6 +253,15 @@ For any protected endpoint (Get, Post, Put):
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+## API Endpoints
+
+| Method | Endpoint | Description | Authentication Required |
+|--------|----------|-------------|------------------------|
+| POST | `/api/auth/login` | User authentication | No |
+| GET | `/api/data/{id}` | Get data by ID | Yes (User/Admin) |
+| POST | `/api/data` | Create new record | Yes (Admin) |
+| PUT | `/api/data/{id}` | Update existing record | Yes (Admin) |
+
 ## Project Architecture
 
 - **Caching Strategy**: Multi-tier caching with Redis (primary) and in-memory (fallback)
@@ -229,7 +295,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    - Check container logs: `docker-compose logs`
    - Reset Docker environment: `docker-compose down -v` (removes volumes)
 
-4. **JWT Token Expired**
+6. **Test Failures**
+   - Ensure MongoDB and Redis services are running before running integration tests
+   - Check test output for specific error details
+
+7. **JWT Token Expired**
    - Login again to get a fresh token
    - Ensure you're copying the complete token from the login response
 
@@ -237,8 +307,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 - The application creates cache files automatically during operation
 - Database collections are created on first run
-- Default ports: API runs on port 7059 (HTTPS)
-- Swagger documentation available at `https://localhost:7059/swagger/index.html`
+- **Local Development**: API runs on port 7059 (HTTPS), Swagger at `https://localhost:7059/swagger/index.html`
+- **Docker Deployment**: API runs on port 8080 (HTTP), Swagger at `http://localhost:8080/swagger/index.html`
+- **Docker Benefits**: Complete isolation, no need to install MongoDB/Redis locally, consistent environment across different machines
+- **Testing**: xUnit test suite included with unit, integration, and service layer tests
 
 ---
 
