@@ -19,9 +19,17 @@ Before running this project, ensure you have the following installed:
 - **MongoDB** - [Download and install MongoDB Community Server](https://www.mongodb.com/try/download/community)
 - **Redis** (optional - for Redis caching) - [Download here](https://redis.io/download) or use Docker
 - **Postman** - [Download here](https://www.postman.com/downloads/) for API testing
-- **Git** - [Download here](https://git-scm.com/downloads)
+- **Docker** (optional - for containerized deployment) - [Download here](https://www.docker.com/products/docker-desktop)
 
 ## Setup Instructions
+
+You have two options to run this project:
+1. **Local Development Setup** (using Visual Studio)
+2. **Docker Container Setup** (containerized deployment)
+
+---
+
+## Option 1: Local Development Setup
 
 ### 1. Get the Project Code
 
@@ -76,6 +84,67 @@ The Swagger interface provides:
 - Request/response schemas
 - Authentication requirements for each endpoint
 
+---
+
+## Option 2: Docker Container Setup
+
+This project includes Docker support for easy containerized deployment with all dependencies included.
+
+### Prerequisites for Docker Setup
+- **Docker Desktop** installed and running
+- **Git** (to clone the repository)
+
+### 1. Get the Project Code
+```bash
+git clone [YOUR_REPOSITORY_URL]
+cd [YOUR_PROJECT_FOLDER_NAME]
+```
+
+### 2. Run with Docker Compose
+The project includes a `docker-compose.yml` file that sets up the entire application stack including MongoDB and Redis.
+
+```bash
+# Build and start all services
+docker-compose up --build
+```
+
+This command will:
+- Build the .NET API Docker image
+- Start MongoDB container
+- Start Redis container
+- Start the API container
+- Set up networking between all services
+
+### 3. Access the Application
+- **API Base URL**: `http://localhost:8080`
+- **Swagger Documentation**: `http://localhost:8080/swagger/index.html`
+
+### 4. Docker Management Commands
+
+```bash
+# Run in background (detached mode)
+docker-compose up -d --build
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs
+
+# View logs for specific service
+docker-compose logs api
+
+# Rebuild and restart
+docker-compose down && docker-compose up --build
+```
+
+### 5. Docker Port Configuration
+- **API**: Accessible on port `8080`
+- **MongoDB**: Internal container communication (not exposed)
+- **Redis**: Internal container communication (not exposed)
+
+---
+
 ## API Endpoints
 
 | Method | Endpoint | Description | Authentication Required |
@@ -106,12 +175,21 @@ The Swagger interface provides:
 4. Send the request
 5. Copy the JWT token from the response
 
-#### Step 2: Use Protected Endpoints
-1. For any other endpoint (Get, Post, Put):
-2. Go to the **"Authorization"** tab
-3. Select **"Bearer Token"** from the dropdown
-4. Paste the JWT token you copied from the login response
-5. Send the request
+### 2. Use Protected Endpoints
+
+**For Local Development (Visual Studio):**
+- Base URL: `https://localhost:7059`
+- Update Postman collection base URL if needed
+
+**For Docker Setup:**
+- Base URL: `http://localhost:8080`
+- Update Postman collection base URL to `http://localhost:8080`
+
+For any protected endpoint (Get, Post, Put):
+1. Go to the **"Authorization"** tab
+2. Select **"Bearer Token"** from the dropdown
+3. Paste the JWT token you copied from the login response
+4. Send the request
 
 ### Sample Authentication Headers
 ```
@@ -138,8 +216,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    - Application will automatically fall back to in-memory caching
 
 3. **Build Errors**
-   - Restore NuGet packages: Right-click solution → "Restore NuGet Packages"
-   - Clean and rebuild: Build → Clean Solution, then Build → Rebuild Solution
+   - **Local Setup**: Restore NuGet packages: Right-click solution → "Restore NuGet Packages"
+   - **Local Setup**: Clean and rebuild: Build → Clean Solution, then Build → Rebuild Solution
+   - **Docker Setup**: Rebuild containers: `docker-compose down && docker-compose up --build`
+
+4. **Port Conflicts**
+   - **Local Setup**: If port 7059 is in use, Visual Studio will assign a different port
+   - **Docker Setup**: If port 8080 is in use, modify the port mapping in `docker-compose.yml`
+
+5. **Docker Issues**
+   - Ensure Docker Desktop is running
+   - Check container logs: `docker-compose logs`
+   - Reset Docker environment: `docker-compose down -v` (removes volumes)
 
 4. **JWT Token Expired**
    - Login again to get a fresh token
