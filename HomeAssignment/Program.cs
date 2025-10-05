@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using HomeAssignment.Configuration;
 using HomeAssignment.Decorators;
 using HomeAssignment.DTOs;
@@ -19,8 +19,11 @@ using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CRITICAL: Enable PII logging to see actual token values in debug
-IdentityModelEventSource.ShowPII = true;
+// Enable PII logging only in Development
+if (builder.Environment.IsDevelopment())
+{
+    IdentityModelEventSource.ShowPII = true;
+}
 
 // Add configuration
 builder.Services.Configure<MongoDbSettings>(
@@ -51,7 +54,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // For development
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -65,57 +68,8 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero,
         RequireExpirationTime = true,
         RequireSignedTokens = true,
-        // Critical: Map role claims correctly
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.Name
-    };
-
-    // Add detailed event logging for debugging
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            var authHeader = context.Request.Headers.Authorization.ToString();
-            Console.WriteLine($"?? Received Authorization Header: '{authHeader}'");
-
-            if (authHeader.StartsWith("Bearer "))
-            {
-                var token = authHeader.Substring("Bearer ".Length).Trim();
-            }
-
-            return Task.CompletedTask;
-        },
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"docker --version\r\nJWT Authentication FAILED: {context.Exception.Message}");
-            Console.WriteLine($"Exception Type: {context.Exception.GetType().Name}");
-            Console.WriteLine($"Full Exception: {context.Exception}");
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            var username = context.Principal?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-            var role = context.Principal?.FindFirst(ClaimTypes.Role)?.Value ?? "Unknown";
-            var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Unknown";
-
-            Console.WriteLine($"? JWT Token VALIDATED successfully!");
-            Console.WriteLine($"   User: {username}");
-            Console.WriteLine($"   Role: {role}");
-            Console.WriteLine($"   UserID: {userId}");
-
-            return Task.CompletedTask;
-        },
-        OnChallenge = context =>
-        {
-            Console.WriteLine($"JWT Challenge triggered: {context.Error}");
-            Console.WriteLine($"Error Description: {context.ErrorDescription}");
-            return Task.CompletedTask;
-        },
-        OnForbidden = context =>
-        {
-            Console.WriteLine($"JWT Forbidden: User authenticated but lacks permissions");
-            return Task.CompletedTask;
-        }
     };
 });
 
@@ -166,7 +120,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:7059")
+        policy.WithOrigins(
+                  "https://localhost:7059",
+                  "http://localhost:7059",
+                  "http://localhost:5000",
+                  "http://localhost:8080")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

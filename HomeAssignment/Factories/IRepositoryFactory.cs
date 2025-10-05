@@ -1,4 +1,4 @@
-﻿using HomeAssignment.Repositories;
+using HomeAssignment.Repositories;
 
 namespace HomeAssignment.Factories
 {
@@ -21,16 +21,8 @@ namespace HomeAssignment.Factories
 
         public IDataRepository CreateRepository()
         {
-            // Get the base repository based on storage type
-            IDataRepository baseRepository = _storageType.ToLower() switch
-            {
-                "mongodb" => _serviceProvider.GetRequiredService<MongoDataRepository>(),
-                "inmemory" => _serviceProvider.GetRequiredService<InMemoryDataRepository>(),
-                _ => throw new NotSupportedException($"Storage type '{_storageType}' is not supported.")
-            };
-
-            // Always wrap with caching layer
-            return _serviceProvider.GetRequiredService<CachingDataRepository>();
+            // Resolve the repository from DI (already wrapped with caching in Program.cs)
+            return _serviceProvider.GetRequiredService<IDataRepository>();
         }
 
         public string GetCurrentStorageType()

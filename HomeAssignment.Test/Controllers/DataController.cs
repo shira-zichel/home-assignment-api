@@ -1,4 +1,3 @@
-﻿using AutoMapper;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -17,7 +16,6 @@ namespace HomeAssignment.Tests.Controllers
     public class DataControllerTests
     {
         private readonly Mock<IDataService> _mockDataService;
-        private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IValidator<CreateDataItemDto>> _mockCreateValidator;
         private readonly Mock<IValidator<UpdateDataItemDto>> _mockUpdateValidator;
         private readonly Mock<IValidator<int>> _mockIdValidator;
@@ -27,7 +25,6 @@ namespace HomeAssignment.Tests.Controllers
         public DataControllerTests()
         {
             _mockDataService = new Mock<IDataService>();
-            _mockMapper = new Mock<IMapper>();
             _mockCreateValidator = new Mock<IValidator<CreateDataItemDto>>();
             _mockUpdateValidator = new Mock<IValidator<UpdateDataItemDto>>();
             _mockIdValidator = new Mock<IValidator<int>>();
@@ -35,7 +32,6 @@ namespace HomeAssignment.Tests.Controllers
 
             _controller = new DataController(
                 _mockDataService.Object,
-                _mockMapper.Object,
                 _mockCreateValidator.Object,
                 _mockUpdateValidator.Object,
                 _mockIdValidator.Object,
@@ -53,12 +49,8 @@ namespace HomeAssignment.Tests.Controllers
             // Arrange
             var itemDto = new DataItemDto { Id = 1, Value = "Test Item", CreatedAt = DateTime.UtcNow };
 
-            _mockIdValidator.Setup(x => x.ValidateAsync(1, default))
-                           .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.GetByIdAsync(1))
-                           .ReturnsAsync(itemDto);
-            _mockMapper.Setup(x => x.Map<DataItemDto>(itemDto))
-                      .Returns(itemDto);
+            _mockIdValidator.Setup(x => x.ValidateAsync(1, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(itemDto);
 
             // Act
             var result = await _controller.GetById(1);
@@ -73,10 +65,8 @@ namespace HomeAssignment.Tests.Controllers
         public async Task GetById_WithValidIdButNonExistentItem_ShouldReturnNotFound()
         {
             // Arrange
-            _mockIdValidator.Setup(x => x.ValidateAsync(999, default))
-                           .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.GetByIdAsync(999))
-                           .ReturnsAsync((DataItemDto)null);
+            _mockIdValidator.Setup(x => x.ValidateAsync(999, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((DataItemDto)null);
 
             // Act
             var result = await _controller.GetById(999);
@@ -118,12 +108,8 @@ namespace HomeAssignment.Tests.Controllers
             SetupControllerWithRegularUser();
             var itemDto = new DataItemDto { Id = 1, Value = "Test Item", CreatedAt = DateTime.UtcNow };
 
-            _mockIdValidator.Setup(x => x.ValidateAsync(1, default))
-                           .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.GetByIdAsync(1))
-                           .ReturnsAsync(itemDto);
-            _mockMapper.Setup(x => x.Map<DataItemDto>(itemDto))
-                      .Returns(itemDto);
+            _mockIdValidator.Setup(x => x.ValidateAsync(1, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(itemDto);
 
             // Act
             var result = await _controller.GetById(1);
@@ -143,12 +129,8 @@ namespace HomeAssignment.Tests.Controllers
             var createDto = new CreateDataItemDto { Value = "New Item" };
             var createdDto = new DataItemDto { Id = 1, Value = "New Item", CreatedAt = DateTime.UtcNow };
 
-            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default))
-                               .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.CreateAsync(createDto))
-                           .ReturnsAsync(createdDto);
-            _mockMapper.Setup(x => x.Map<DataItemDto>(createdDto))
-                      .Returns(createdDto);
+            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.CreateAsync(createDto)).ReturnsAsync(createdDto);
 
             // Act
             var result = await _controller.Create(createDto);
@@ -195,12 +177,8 @@ namespace HomeAssignment.Tests.Controllers
             var createDto = new CreateDataItemDto { Value = "New Item" };
             var createdDto = new DataItemDto { Id = 1, Value = "New Item", CreatedAt = DateTime.UtcNow };
 
-            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default))
-                               .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.CreateAsync(createDto))
-                           .ReturnsAsync(createdDto);
-            _mockMapper.Setup(x => x.Map<DataItemDto>(createdDto))
-                      .Returns(createdDto);
+            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.CreateAsync(createDto)).ReturnsAsync(createdDto);
 
             // Act
             var result = await _controller.Create(createDto);
@@ -220,14 +198,9 @@ namespace HomeAssignment.Tests.Controllers
             var updateDto = new UpdateDataItemDto { Value = "Updated Item" };
             var updatedDto = new DataItemDto { Id = 1, Value = "Updated Item", CreatedAt = DateTime.UtcNow };
 
-            _mockIdValidator.Setup(x => x.ValidateAsync(1, default))
-                           .ReturnsAsync(new ValidationResult());
-            _mockUpdateValidator.Setup(x => x.ValidateAsync(updateDto, default))
-                               .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.UpdateAsync(1, updateDto))
-                           .ReturnsAsync(updatedDto);
-            _mockMapper.Setup(x => x.Map<DataItemDto>(updatedDto))
-                      .Returns(updatedDto);
+            _mockIdValidator.Setup(x => x.ValidateAsync(1, default)).ReturnsAsync(new ValidationResult());
+            _mockUpdateValidator.Setup(x => x.ValidateAsync(updateDto, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.UpdateAsync(1, updateDto)).ReturnsAsync(updatedDto);
 
             // Act
             var result = await _controller.Update(1, updateDto);
@@ -312,10 +285,8 @@ namespace HomeAssignment.Tests.Controllers
         public async Task GetById_ShouldCallDataServiceOnce()
         {
             // Arrange
-            _mockIdValidator.Setup(x => x.ValidateAsync(1, default))
-                           .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.GetByIdAsync(1))
-                           .ReturnsAsync(new DataItemDto { Id = 1 });
+            _mockIdValidator.Setup(x => x.ValidateAsync(1, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(new DataItemDto { Id = 1 });
 
             // Act
             await _controller.GetById(1);
@@ -329,21 +300,16 @@ namespace HomeAssignment.Tests.Controllers
         {
             // Arrange
             var createDto = new CreateDataItemDto { Value = "New Item" };
-            var createdDto = new DataItemDto { Id = 1, Value = "New Item", CreatedAt = DateTime.UtcNow }; // Add this line
+            var createdDto = new DataItemDto { Id = 1, Value = "New Item", CreatedAt = DateTime.UtcNow };
 
-            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default))
-                               .ReturnsAsync(new ValidationResult());
-            _mockDataService.Setup(x => x.CreateAsync(createDto))
-                           .ReturnsAsync(createdDto); // Use the createdDto here
-            _mockMapper.Setup(x => x.Map<DataItemDto>(It.IsAny<DataItemDto>())) // Add this line to mock the mapper
-                      .Returns(createdDto); // Return the expected DTO
+            _mockCreateValidator.Setup(x => x.ValidateAsync(createDto, default)).ReturnsAsync(new ValidationResult());
+            _mockDataService.Setup(x => x.CreateAsync(createDto)).ReturnsAsync(createdDto);
 
             // Act
             await _controller.Create(createDto);
 
             // Assert
             _mockDataService.Verify(x => x.CreateAsync(createDto), Times.Once);
-            _mockMapper.Verify(x => x.Map<DataItemDto>(It.IsAny<DataItemDto>()), Times.Once); // Verify mapper call
         }
 
         [Fact]
